@@ -1,0 +1,2 @@
+class CrawlerName:
+    YOUTUBE = 'youtube'

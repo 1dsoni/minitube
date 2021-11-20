@@ -1,0 +1,126 @@
+version: "3.7"
+
+services:
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es02,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+
+    ports:
+      - '9200:9200'
+
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    container_name: es02
+    environment:
+      - node.name=es02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es03
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data02:/usr/share/elasticsearch/data
+
+  es03:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
+    container_name: es03
+    environment:
+      - node.name=es03
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01,es02
+      - cluster.initial_master_nodes=es01,es02,es03
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data03:/usr/share/elasticsearch/data
+
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: 'bitnami/kafka:latest'
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://127.0.0.1:9092
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+      - zookeeper
+
+  web_server:
+    container_name: web_server-container
+
+    build:
+      context: ./web_server
+      dockerfile: Dockerfile
+
+    restart: always
+
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-settings.production}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-secret}
+
+      DB_HOST: ${DB_HOST:-db4free.net}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-minitube1}
+      DB_PASSWORD: ${DB_PASSWORD:-minitube1}
+      DB_NAME: ${DB_NAME:-minitube1}
+
+      KAKFA_BROKERS: ${KAKFA_BROKERS:-kafka:9092}
+      KAKFA_SEARCH_INDEX_TOPIC: ${KAKFA_SEARCH_INDEX_TOPIC:-minitube-index}
+      KAKFA_SEARCH_INDEX_CONSUMER_GRP: ${KAKFA_SEARCH_INDEX_CONSUMER_GRP:-minitube-index}
+
+      ELASTIC_SEARCH_BASE_URL: ${ELASTIC_SEARCH_BASE_URL:-es01:9200}
+      ES_INDEX_YT: ${ES_INDEX_YT:-youtube_videos}
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - zookeeper
+      - kafka
+      - es01
+      - es02
+      - es03
+
+volumes:
+  data01:
+    driver: local
+  data02:
+    driver: local
+  data03:
+    driver: local
