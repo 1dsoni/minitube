@@ -1,10 +1,12 @@
+from django.conf import settings
+
 from ..commons.api_helper import BaseApi
 
 
 class EsApi(BaseApi):
     SERVICE_NAME = 'ELASTIC SEARCH'
     TIMEOUT = 2
-    BASE_URL = 'http://localhost:9200'
+    BASE_URL = settings.CONFIGS['ELASTIC_SEARCH']['BASE_URL']
 
     def search_youtube_vid_via_title(self, query):
         return self._post(
