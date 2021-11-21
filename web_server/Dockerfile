@@ -1,8 +1,10 @@
-FROM python:3.9-buster
+FROM ubuntu:20.04
 
 # copy src code
 RUN mkdir /web_server
 WORKDIR /web_server/
+
+RUN apt -y update && apt -y install apt-utils && apt -y install net-tools python3.8 python3-pip mysql-client libmysqlclient-dev && apt -y upgrade
 
 # just copy the requirements file and install
 ADD ./requirements.txt /web_server/requirements.txt

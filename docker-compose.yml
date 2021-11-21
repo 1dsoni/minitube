@@ -1,6 +1,27 @@
 version: "3.7"
 
 services:
+
+  db:
+    platform: linux/x86_64
+    image: mysql
+
+    container_name: mysql-db
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: minitube1
+      MYSQL_DATABASE: minitube1
+      MYSQL_PASSWORD: minitube1
+      MYSQL_USER: minitube1
+      MYSQL_ROOT_HOST: "172.*.*.*"
+
+    command: mysqld --default-authentication-plugin=mysql_native_password
+
+    ports:
+      - "3306:3306"
+
   es01:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
     container_name: es01
@@ -94,7 +115,7 @@ services:
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-settings.production}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-secret}
 
-      DB_HOST: ${DB_HOST:-db4free.net}
+      DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}
       DB_USER: ${DB_USER:-minitube1}
       DB_PASSWORD: ${DB_PASSWORD:-minitube1}
@@ -111,6 +132,7 @@ services:
       - "8000:8000"
 
     depends_on:
+      - db
       - zookeeper
       - kafka
       - es01

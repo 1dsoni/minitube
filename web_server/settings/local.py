@@ -14,8 +14,8 @@ class LocalSettings(BaseSettings):
             'NAME': 'minitube1',
             'USER': 'minitube1',
             'PASSWORD': 'minitube1',
-            'HOST': 'db4free.net',
-            'PORT': '3306',
+            'HOST': '127.0.0.1',
+            'PORT': '3308',
         }
     }
 
