@@ -47,7 +47,10 @@ def save_crawled_item(crawler: Crawler, item_uid, item):
                 item=item,
                 status=CrawledItemStatus.INITIAL_SAVED
             )
-            logger.error('%s: saved: %s', crawler.name, out.item_uid)
+            logger.error(
+                '%s: saved: %s, item: %s',
+                crawler.name, out.item_uid, out.item
+            )
         transaction.on_commit(lambda: send_to_index_queue(out))
     except Exception as e:
         logger.exception('failed save_crawled_item, err: %s', str(e))
