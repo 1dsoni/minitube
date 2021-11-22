@@ -21,5 +21,3 @@ ENV PYTHONPATH "${PYTHONPATH}:/web_server/minitube/"
 ENV PYTHONUNBUFFERED 1
 
 EXPOSE 8000
-
-CMD ["/web_server/runner.sh"]

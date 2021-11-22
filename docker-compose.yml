@@ -11,13 +11,11 @@ services:
     restart: always
 
     environment:
-      MYSQL_ROOT_PASSWORD: minitube1
-      MYSQL_DATABASE: minitube1
-      MYSQL_PASSWORD: minitube1
-      MYSQL_USER: minitube1
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_NAME:-minitube1}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-minitube1}
+      MYSQL_USER: ${DB_USER:-minitube1}
       MYSQL_ROOT_HOST: "172.*.*.*"
-
-    command: mysqld --default-authentication-plugin=mysql_native_password
 
     ports:
       - "3306:3306"
@@ -28,8 +26,8 @@ services:
     environment:
       - node.name=es01
       - cluster.name=es-docker-cluster
-      - discovery.seed_hosts=es02,es03
-      - cluster.initial_master_nodes=es01,es02,es03
+      - discovery.seed_hosts=es02
+      - cluster.initial_master_nodes=es01,es02
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -49,8 +47,8 @@ services:
     environment:
       - node.name=es02
       - cluster.name=es-docker-cluster
-      - discovery.seed_hosts=es01,es03
-      - cluster.initial_master_nodes=es01,es02,es03
+      - discovery.seed_hosts=es01
+      - cluster.initial_master_nodes=es01,es02
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -59,23 +57,6 @@ services:
         hard: -1
     volumes:
       - data02:/usr/share/elasticsearch/data
-
-  es03:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
-    container_name: es03
-    environment:
-      - node.name=es03
-      - cluster.name=es-docker-cluster
-      - discovery.seed_hosts=es01,es02
-      - cluster.initial_master_nodes=es01,es02,es03
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - data03:/usr/share/elasticsearch/data
 
   zookeeper:
     image: 'bitnami/zookeeper:latest'
@@ -99,11 +80,51 @@ services:
       - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
       - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://localhost:9093
       - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
     depends_on:
       - zookeeper
 
   web_server:
     container_name: web_server-container
+
+    build:
+      context: ./web_server
+      dockerfile: Dockerfile
+
+    restart: always
+
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-settings.production}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-secret}
+
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-minitube1}
+      DB_PASSWORD: ${DB_PASSWORD:-minitube1}
+      DB_NAME: ${DB_NAME:-minitube1}
+
+      KAKFA_BROKERS: ${KAKFA_BROKERS:-kafka:9092}
+      KAKFA_CRAWLER_START_TOPIC: ${KAKFA_CRAWLER_START_TOPIC:-minitube-crawler-init}
+      KAKFA_SEARCH_INDEX_TOPIC: ${KAKFA_SEARCH_INDEX_TOPIC:-minitube-index}
+      KAKFA_SEARCH_INDEX_CONSUMER_GRP: ${KAKFA_SEARCH_INDEX_CONSUMER_GRP:-minitube-index}
+
+      ELASTIC_SEARCH_BASE_URL: ${ELASTIC_SEARCH_BASE_URL:-http://es01:9200}
+      ES_INDEX_YT: ${ES_INDEX_YT:-youtube_videos}
+
+    ports:
+      - "8000:8000"
+
+    command: ./web_server_runner.sh
+
+    depends_on:
+      - db
+      - zookeeper
+      - kafka
+      - es01
+      - es02
+
+  indexer_worker:
+    container_name: indexer_worker-container
 
     build:
       context: ./web_server
@@ -128,21 +149,13 @@ services:
       ELASTIC_SEARCH_BASE_URL: ${ELASTIC_SEARCH_BASE_URL:-http://es01:9200}
       ES_INDEX_YT: ${ES_INDEX_YT:-youtube_videos}
 
-    ports:
-      - "8000:8000"
+    command: ./indexer_worker_runner.sh
 
     depends_on:
-      - db
-      - zookeeper
-      - kafka
-      - es01
-      - es02
-      - es03
+      - web_server
 
 volumes:
   data01:
     driver: local
   data02:
-    driver: local
-  data03:
     driver: local

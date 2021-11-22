@@ -1,6 +1,9 @@
+from django.db import transaction
+
 from ..constants import CrawlerName
 from ...constants import CrawlerStatus
 from ...models import Crawler
+from ....queue.helpers import kafka_crawler_init
 
 
 def get_crawler_handler(crawler_name):
@@ -25,8 +28,23 @@ def create_crawler(name, crawler, crawler_config, run_after_seconds) -> Crawler:
     )
 
 
-def get_all_enabled_crawlers():
-    return Crawler.objects.filter(
-        is_enabled=True,
-        status=CrawlerStatus.STOPPED
-    )
+def start_crawler_via_name(name):
+    kafka_crawler_init.send({'name': name})
+
+
+def stop_crawler_via_name(name):
+    with transaction.atomic():
+        crawler = Crawler.objects.filter(
+            name=name,
+            is_enabled=True,
+            status=CrawlerStatus.RUNNING
+        ).select_for_update().last()
+
+        if not crawler:
+            return
+
+        crawler.is_enabled = False
+        crawler.status = CrawlerStatus.STOPPED
+        crawler.save()
+
+    return crawler

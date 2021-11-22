@@ -20,5 +20,9 @@ def response_200(data):
     return response(data, 200)
 
 
+def response_202(data):
+    return response(data, 202)
+
+
 def response_400():
     return response({}, 400)

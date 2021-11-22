@@ -53,15 +53,18 @@ class ProductionSettings(BaseSettings):
                 'YOUTUBE_VIDEO': ENV_VARS.ES_INDEX_YT
             }
         },
-        'KAKFA': {
+        'KAFKA': {
             'BROKERS': {
-                'SEARCH_INDEX': ENV_VARS.KAKFA_BROKERS
+                'SEARCH_INDEX': ENV_VARS.KAKFA_BROKERS,
+                'CRAWLER_INIT': ['kafka:9092'],
             },
             'TOPICS': {
-                'SEARCH_INDEX': ENV_VARS.KAKFA_SEARCH_INDEX_TOPIC
+                'SEARCH_INDEX': ENV_VARS.KAKFA_SEARCH_INDEX_TOPIC,
+                'CRAWLER_INIT': 'minitube-crawler-init'
             },
             'CONSUMERS': {
-                'SEARCH_INDEX': ENV_VARS.KAKFA_SEARCH_INDEX_CONSUMER_GRP
+                'SEARCH_INDEX': ENV_VARS.KAKFA_SEARCH_INDEX_CONSUMER_GRP,
+                'CRAWLER_INIT': 'minitube_crawler_init_grp1'
             }
         }
     }

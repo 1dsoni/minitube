@@ -15,7 +15,7 @@ class LocalSettings(BaseSettings):
             'USER': 'minitube1',
             'PASSWORD': 'minitube1',
             'HOST': '127.0.0.1',
-            'PORT': '3308',
+            'PORT': '3306',
         }
     }
 
@@ -26,15 +26,18 @@ class LocalSettings(BaseSettings):
                 'YOUTUBE_VIDEO': 'youtube_videos'
             }
         },
-        'KAKFA': {
+        'KAFKA': {
             'BROKERS': {
-                'SEARCH_INDEX': ['kafka:9092']
+                'SEARCH_INDEX': ['localhost:9093'],
+                'CRAWLER_INIT': ['localhost:9093'],
             },
             'TOPICS': {
-                'SEARCH_INDEX': 'minitube-index'
+                'SEARCH_INDEX': 'minitube-index',
+                'CRAWLER_INIT': 'minitube-crawler-init',
             },
             'CONSUMERS': {
-                'SEARCH_INDEX': 'minitube_index_grp1'
+                'SEARCH_INDEX': 'minitube_index_grp1',
+                'CRAWLER_INIT': 'minitube_crawler_init_grp1',
             }
         }
     }

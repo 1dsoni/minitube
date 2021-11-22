@@ -7,3 +7,9 @@ kafka_indexer = KafkaQueueImplementation(
     brokers=settings.CONFIGS['KAFKA']['BROKERS']['SEARCH_INDEX'],
     group_id=settings.CONFIGS['KAFKA']['CONSUMERS']['SEARCH_INDEX']
 )
+
+kafka_crawler_init = KafkaQueueImplementation(
+    topic=settings.CONFIGS['KAFKA']['TOPICS']['CRAWLER_INIT'],
+    brokers=settings.CONFIGS['KAFKA']['BROKERS']['CRAWLER_INIT'],
+    group_id=settings.CONFIGS['KAFKA']['CONSUMERS']['CRAWLER_INIT']
+)

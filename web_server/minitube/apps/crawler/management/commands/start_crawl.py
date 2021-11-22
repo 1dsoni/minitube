@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from ...worker.indexer import consume_index_events
+from ...worker.youtube import consume_index_events
 
 
 class Command(BaseCommand):
