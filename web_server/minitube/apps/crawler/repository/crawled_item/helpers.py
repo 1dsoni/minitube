@@ -47,14 +47,20 @@ def save_crawled_item(crawler: Crawler, item_uid, item):
                 item=item,
                 status=CrawledItemStatus.INITIAL_SAVED
             )
-            logger.error('saved: %s', out.item_uid)
+            logger.error('%s: saved: %s', crawler.name, out.item_uid)
         transaction.on_commit(lambda: send_to_index_queue(out))
     except Exception as e:
         logger.exception('failed save_crawled_item, err: %s', str(e))
 
 
-def get_new_crawled_item_via_item_uid(item_uid) -> CrawledItem:
+def get_queued_crawled_item_via_item_uid(item_uid) -> CrawledItem:
     return CrawledItem.objects.filter(
         item_uid=item_uid,
-        status=CrawledItemStatus.INITIAL_SAVED
+        status=CrawledItemStatus.QUEUED_FOR_INDEX
+    ).first()
+
+
+def get_crawled_item_via_item_uid(item_uid) -> CrawledItem:
+    return CrawledItem.objects.filter(
+        item_uid=item_uid,
     ).first()

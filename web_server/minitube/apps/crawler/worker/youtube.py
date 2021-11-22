@@ -1,37 +1,26 @@
-from django.conf import settings
+import logging
 
-from ..helpers import index_item
-from ...crawler.repository.crawled_item.helpers import \
-    get_new_crawled_item_via_item_uid, mark_item_failed_indexed, \
-    mark_item_indexed
-from ...queue.helpers import kafka_indexer
+from ..helpers import run_crawler_via_name
+from ...commons.background import BackgroundTasks
+from ...queue.helpers import kafka_crawler_init
 
-YOUTUBE_VID_ES_INDEX = settings.CONFIGS['ELASTIC_SEARCH']['INDEXES']['YOUTUBE_VIDEO']
+logger = logging.getLogger(__name__)
 
 
 def consume_crawler_events():
-    kafka_indexer.consume(process_event)
+    kafka_crawler_init.consume(process_event)
 
 
 def process_event(item):
     """
-    item: {'item_uid': item_uid}
+    item: {'name': name}
     """
-    print('got item %s', item)
 
-    if not (item and 'item_uid' in item):
+    print('got %s', item)
+    if not (item and 'name' in item):
+        logger.warning('ignoring %s', item)
         return
 
-    item_uid = item['item_uid']
+    name = item['name']
 
-    crawled_item = get_new_crawled_item_via_item_uid(item_uid)
-
-    if not crawled_item:
-        return
-
-    try:
-        index_item(crawled_item.item, YOUTUBE_VID_ES_INDEX)
-    except Exception as e:
-        mark_item_failed_indexed(crawled_item, str(e))
-    else:
-        mark_item_indexed(crawled_item)
+    BackgroundTasks(target=run_crawler_via_name, kwargs={'name': name}).start()

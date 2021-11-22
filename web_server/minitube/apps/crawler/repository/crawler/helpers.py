@@ -28,6 +28,14 @@ def create_crawler(name, crawler, crawler_config, run_after_seconds) -> Crawler:
     )
 
 
+def get_stopped_crawler_via_name(name):
+    return Crawler.objects.filter(
+        name=name,
+        is_enabled=True,
+        status=CrawlerStatus.STOPPED
+    ).last()
+
+
 def start_crawler_via_name(name):
     kafka_crawler_init.send({'name': name})
 
@@ -48,3 +56,13 @@ def stop_crawler_via_name(name):
         crawler.save()
 
     return crawler
+
+
+def mark_crawler_running(crawler: Crawler):
+    crawler.status = CrawlerStatus.RUNNING
+    crawler.save()
+
+
+def mark_crawler_stopped(crawler: Crawler):
+    crawler.status = CrawlerStatus.STOPPED
+    crawler.save()

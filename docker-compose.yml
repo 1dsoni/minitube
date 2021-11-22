@@ -154,6 +154,37 @@ services:
     depends_on:
       - web_server
 
+  crawler_worker:
+    container_name: crawler_worker-container
+
+    build:
+      context: ./web_server
+      dockerfile: Dockerfile
+
+    restart: always
+
+    environment:
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-settings.production}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-secret}
+
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-minitube1}
+      DB_PASSWORD: ${DB_PASSWORD:-minitube1}
+      DB_NAME: ${DB_NAME:-minitube1}
+
+      KAKFA_BROKERS: ${KAKFA_BROKERS:-kafka:9092}
+      KAKFA_SEARCH_INDEX_TOPIC: ${KAKFA_SEARCH_INDEX_TOPIC:-minitube-index}
+      KAKFA_SEARCH_INDEX_CONSUMER_GRP: ${KAKFA_SEARCH_INDEX_CONSUMER_GRP:-minitube-index}
+
+      ELASTIC_SEARCH_BASE_URL: ${ELASTIC_SEARCH_BASE_URL:-http://es01:9200}
+      ES_INDEX_YT: ${ES_INDEX_YT:-youtube_videos}
+
+    command: ./crawler_worker_runner.sh
+
+    depends_on:
+      - web_server
+
 volumes:
   data01:
     driver: local

@@ -1,9 +1,9 @@
 from django.core.management import BaseCommand
 
-from ...worker.youtube import consume_index_events
+from ...worker.youtube import consume_crawler_events
 
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        consume_index_events()
+        consume_crawler_events()

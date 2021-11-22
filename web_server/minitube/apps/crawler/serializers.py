@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Crawler
+from .models import Crawler, CrawledItem
 
 
 class CrawlerModelSerializer(serializers.ModelSerializer):
@@ -12,3 +12,13 @@ class CrawlerModelSerializer(serializers.ModelSerializer):
 
 class CrawlerNameSerializer(serializers.Serializer):
     name = serializers.CharField()
+
+
+class CrawledItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CrawledItem
+        fields = '__all__'
+
+
+class CrawledItemIndexSerializer(serializers.Serializer):
+    item_uid = serializers.CharField()

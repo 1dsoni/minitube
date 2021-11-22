@@ -21,7 +21,7 @@ class LocalSettings(BaseSettings):
 
     CONFIGS = {
         'ELASTIC_SEARCH': {
-            'BASE_URL': 'localhost:9200',
+            'BASE_URL': 'http://localhost:9200',
             'INDEXES': {
                 'YOUTUBE_VIDEO': 'youtube_videos'
             }
