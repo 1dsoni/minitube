@@ -2,11 +2,37 @@
 
 Steps to run
 1. clone the repo
-2. docker-compose up
-3. wait for all services to come up, takes around 2-3 mins
+2. docker-compose up [first run might take around 10-15 minutes to build]
+3. wait for all services to come up, it takes around 2-3 minutes to come up post build step
 4. initial setup:
     ```
-   a. add api key(s):
+   a. create an index in the elastic search via:
+         curl --location --request PUT 'http://localhost:9200/youtube_videos' \
+         --header 'Content-Type: application/json' \
+         --data-raw '{
+             "mappings": {
+                 "properties": {
+                     "video_id": {
+                         "type": "keyword"
+                     },
+                     "thumbnail": {
+                         "type": "keyword",
+                         "index": false
+                     },
+                     "title": {
+                         "type": "search_as_you_type"
+                     },
+                     "description": {
+                         "type": "text"
+                     },
+                     "published_at": {
+                         "type": "search_as_you_type"
+                     }
+                 }
+             }
+         }'
+  
+   b. add api key(s):
       curl --location --request POST 'localhost:8000/api/v1/api-key/' \
         --header 'Content-Type: application/json' \
         --data-raw '{
@@ -17,7 +43,7 @@ Steps to run
             "is_active": true
         }'
 
-   b. create crawler(s):
+   c. create crawler(s):
         curl --location --request POST 'localhost:8000/api/v1/crawler/' \
         --header 'Content-Type: application/json' \
         --data-raw '{
@@ -30,14 +56,20 @@ Steps to run
             "status": "stopped",
             "is_enabled": true
         }'
-   c. start crawler:
+   d. start crawler:
         curl --location --request POST 'localhost:8000/api/v1/crawler/init/' \
         --header 'Content-Type: application/json' \
         --data-raw '{
             "name": "youtube_moon_landing"
         }'
    
-   d. search items:
+   e. search items:
         curl --location --request GET 'localhost:8000/api/v1/search/yt/?query=landing' \
         --header 'Content-Type: application/json'
     ```
+
+### Overview
+- the crawler uses the api keys to fetch "queries"
+- the fetched items are sent for indexing via kafka queue
+- the indexer picks items from kafka queue and indexes it into elastic search
+- the webserver queries the elastic search for the items
